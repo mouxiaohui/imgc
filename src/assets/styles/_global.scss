@@ -1,0 +1,9 @@
+html,
+body {
+  @apply w-full h-full bg-black;
+}
+
+#app {
+  @apply w-full h-full bg-black;
+  color: white;
+}
