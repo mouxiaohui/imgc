@@ -1,40 +1,47 @@
 <script setup lang="ts">
 import { ref } from "@vue/reactivity";
+import { readBinaryFile, readTextFile } from "@tauri-apps/api/fs";
+import { invoke } from "@tauri-apps/api/tauri";
+import { open } from "@tauri-apps/api/dialog";
 
 interface Palette {
-  imgSrc: string;
+  imgSrc: string | undefined;
   colors: string[];
 }
 
 let palettes = ref<Palette[]>([]);
 
 // 处理上传图片
-function handleUpload(event: any) {
-  const files = event.target.files;
-
-  for (let i = 0; i < files.length; i++) {
-    let reader = new FileReader();
-    reader.readAsDataURL(files[i]);
-    reader.onload = function (e) {
-      let src = e.target?.result?.toString();
-      if (src) {
-        palettes.value.push({
-          imgSrc: src,
-          colors: ["color1", "color2"]
-        });
+async function handleUpload() {
+  let filesPath = await open({
+    title: "选择图片",
+    multiple: true,
+    filters: [
+      {
+        name: "image",
+        extensions: ["svg", "png", "jpg", "jpeg", "gif"]
       }
-    };
+    ]
+  });
+
+  if (filesPath instanceof Array) {
+    for (const key in filesPath) {
+      getColor(filesPath[key]);
+    }
   }
+}
+
+function getColor(path: string) {
+  invoke("get_image_color", { path: path });
 }
 </script>
 
 <template>
   <div class="header">
-    <div class="upload">
+    <div class="upload" @click="handleUpload">
       <label class="cursor-pointer">
         <img src="./assets/image/upload.svg" />
         <div>上传图片</div>
-        <input class="hidden w-0 h-0" multiple="true" type="file" accept="image/*" @change="handleUpload" />
       </label>
     </div>
   </div>
