@@ -18,7 +18,21 @@ tauri-build = { version = "1.0.0-rc.3", features = [] }
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 tauri = { version = "1.0.0-rc.3", features = ["api-all"] }
-kmeans_colors = "0.4.0"
+
+[dependencies.image]
+version = "0.24.1"
+features = ["jpeg", "png"]
+default-features = false
+
+[dependencies.kmeans_colors]
+version = "0.4.0"
+features = ["palette_color"]
+default-features = false
+
+[dependencies.palette]
+version = "0.5.0"
+default-features = false
+features = ["std"]
 
 [features]
 # by default Tauri runs in production mode

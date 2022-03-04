@@ -5,8 +5,8 @@ import { invoke } from "@tauri-apps/api/tauri";
 import { open } from "@tauri-apps/api/dialog";
 
 interface Palette {
-  imgSrc: string | undefined;
-  colors: string[];
+  rgb: string;
+  hex: string;
 }
 
 let palettes = ref<Palette[]>([]);
@@ -19,20 +19,25 @@ async function handleUpload() {
     filters: [
       {
         name: "image",
-        extensions: ["svg", "png", "jpg", "jpeg", "gif"]
+        extensions: ["svg", "png", "jpg", "jpeg"]
       }
     ]
   });
 
   if (filesPath instanceof Array) {
     for (const key in filesPath) {
-      getColor(filesPath[key]);
+      await addPalette(filesPath[key]);
     }
   }
 }
 
-function getColor(path: string) {
-  invoke("get_image_color", { path: path });
+async function addPalette(path: string) {
+  let palette = await invoke("get_palette", { path: path });
+  console.log(palette);
+  // let rgb = palette.
+  // palettes.value.push({
+  //   colors
+  // })
 }
 </script>
 
@@ -49,7 +54,7 @@ function getColor(path: string) {
     <ul>
       <li v-for="(item, index) in palettes" :key="index">
         <div class="palette">
-          <img :src="item.imgSrc" />
+          <!-- <img :src="item.imgSrc" /> -->
           <div class="colors"></div>
         </div>
       </li>
