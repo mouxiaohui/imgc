@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref } from "@vue/reactivity";
 import { invoke } from "@tauri-apps/api/tauri";
+import Color from "color";
+import { writeText } from "@tauri-apps/api/clipboard";
 
 interface RefPalette {
   imgSrc: string;
@@ -12,12 +14,13 @@ interface Palette {
   hex: string;
 }
 
-let refPalette = ref<RefPalette[]>([]);
-let refRgb = ref<string>();
-let refHex = ref<string>();
+const refPalette = ref<RefPalette[]>([]);
+const colorType = ref<string>("HEX");
+const colorHex = ref<string>("");
+const colorValue = ref<string>("");
 
 // 处理上传图片
-async function handleUpload(event: any) {
+function handleUpload(event: any) {
   const files = event.target.files;
 
   for (let i = 0; i < files.length; i++) {
@@ -32,20 +35,46 @@ async function handleUpload(event: any) {
   }
 }
 
-async function addPalette(imageBase64: string) {
-  let palettes = (await invoke("get_palettes", {
+function addPalette(imageBase64: string) {
+  invoke("get_palettes", {
     imageBase64: imageBase64.substring(imageBase64.indexOf(",") + 1)
-  })) as Palette[];
-  refPalette.value.push({
-    imgSrc: imageBase64,
-    palettes
-  });
-  console.log(palettes);
+  })
+    .then((palettes: any) => {
+      palettes as Palette[];
+      refPalette.value.push({
+        imgSrc: imageBase64,
+        palettes
+      });
+    })
+    .catch((error: any) => {
+      console.log(error);
+    });
 }
 
 function handleSelectColor(color: Palette) {
-  refRgb.value = `Rgb(${color.rgb[0]}, ${color.rgb[1]}, ${color.rgb[2]})`;
-  refHex.value = color.hex;
+  colorHex.value = color.hex;
+  changeColorType();
+  writeText(colorValue.value);
+}
+
+function changeColorType() {
+  if (colorHex.value === "") return false;
+  const color = Color(colorHex.value);
+  if (colorType.value === "HEX") {
+    colorValue.value = colorHex.value;
+  }
+  if (colorType.value === "HSL") {
+    colorValue.value = color.hsl().string();
+  }
+  if (colorType.value === "RGB") {
+    colorValue.value = color.rgb().string();
+  }
+  if (colorType.value === "CMYK") {
+    colorValue.value = color.cmyk().round().array().toString();
+  }
+  if (colorType.value === "HWB") {
+    colorValue.value = color.hwb().string();
+  }
 }
 </script>
 
@@ -64,6 +93,16 @@ function handleSelectColor(color: Palette) {
         />
       </label>
     </div>
+    <div class="select">
+      <div class="input"><input maxlength="50" type="text" v-model="colorValue" /></div>
+      <select class="select-type" v-model="colorType" @change="changeColorType">
+        <option value="HEX" label="HEX"></option>
+        <option value="HSL" label="HSL"></option>
+        <option value="RGB" label="RGB"></option>
+        <option value="CMYK" label="CMYK"></option>
+        <option value="HWB" label="HWB"></option>
+      </select>
+    </div>
   </div>
   <div class="body">
     <ul>
@@ -74,6 +113,7 @@ function handleSelectColor(color: Palette) {
             <div class="wraper">
               <div
                 class="color-block"
+                title="单击显示并复制颜色值颜色值"
                 v-for="(color, j) in item.palettes"
                 :key="j"
                 :style="`background-color: ${color.hex};`"
@@ -85,17 +125,11 @@ function handleSelectColor(color: Palette) {
       </li>
     </ul>
   </div>
-  <div class="footer">
-    <div :style="`border-top: 3px solid ${refHex};`">
-      <div>{{ refRgb }}</div>
-      <div>{{ refHex }}</div>
-    </div>
-  </div>
 </template>
 
 <style lang="scss">
 .header {
-  @apply flex w-full justify-center mb-2 select-none;
+  @apply flex w-full mb-2 select-none px-4 justify-between;
 
   .upload {
     @apply flex w-28 justify-center border-2 rounded-xl;
@@ -109,18 +143,46 @@ function handleSelectColor(color: Palette) {
       }
     }
   }
+
+  .select {
+    @apply flex items-center;
+
+    .input {
+      @apply border border-white;
+
+      input {
+        @apply border-none outline-none text-white bg-black;
+        text-indent: 4px;
+        width: 210px;
+        height: 30px;
+      }
+    }
+
+    .select-type {
+      @apply outline-none border-none;
+      font-size: 18px;
+      text-indent: 4px;
+      width: 80px;
+      height: 30px;
+      background: black;
+    }
+  }
 }
 
 .body {
-  @apply overflow-auto;
+  @apply overflow-auto px-4;
   height: calc(100% - 148px);
 
   .palette {
-    @apply h-40 mt-4 flex;
+    @apply mt-4 flex;
+    height: 164px;
 
     .img {
+      @apply border-2 border-white select-none;
+
       img {
-        @apply h-40 w-40;
+        width: 160px;
+        height: 160px;
       }
     }
 
@@ -151,11 +213,6 @@ function handleSelectColor(color: Palette) {
       }
     }
   }
-}
-
-.footer {
-  @apply h-14 text-center flex justify-center flex-col;
-  background-color: rgb(15, 15, 15);
 }
 
 *::-webkit-scrollbar {
