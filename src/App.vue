@@ -18,6 +18,7 @@ const refPalette = ref<RefPalette[]>([]);
 const colorType = ref<string>("HEX");
 const colorHex = ref<string>("");
 const colorValue = ref<string>("");
+const showCopy = ref<boolean>(true);
 
 // 处理上传图片
 function handleUpload(event: any) {
@@ -35,8 +36,10 @@ function handleUpload(event: any) {
   }
 }
 
+// 调用Rust函数，处理图片并分析颜色
 function addPalette(imageBase64: string) {
   invoke("get_palettes", {
+    // 去除base64图片前缀: data:image/jpg;base64,
     imageBase64: imageBase64.substring(imageBase64.indexOf(",") + 1)
   })
     .then((palettes: any) => {
@@ -54,6 +57,7 @@ function addPalette(imageBase64: string) {
 function handleSelectColor(color: Palette) {
   colorHex.value = color.hex;
   changeColorType();
+  // 写入剪切板
   writeText(colorValue.value);
 }
 
@@ -76,6 +80,16 @@ function changeColorType() {
     colorValue.value = color.hwb().string();
   }
 }
+
+function handleCopy() {
+  if (colorValue.value !== "") {
+    writeText(colorValue.value);
+    showCopy.value = false;
+    setTimeout(() => {
+      showCopy.value = true;
+    }, 450);
+  }
+}
 </script>
 
 <template>
@@ -94,13 +108,18 @@ function changeColorType() {
       </label>
     </div>
     <div class="select">
+      <div class="circle-block" :style="`background-color: ${colorHex};`"></div>
       <div class="input"><input maxlength="50" type="text" v-model="colorValue" /></div>
+      <div class="copy" @click="handleCopy">
+        <img v-show="showCopy" src="./assets/image/copy.svg" />
+        <img v-show="!showCopy" src="./assets/image/ok.svg" />
+      </div>
       <select class="select-type" v-model="colorType" @change="changeColorType">
+        <option value="RGB" label="RGB"></option>
         <option value="HEX" label="HEX"></option>
         <option value="HSL" label="HSL"></option>
-        <option value="RGB" label="RGB"></option>
-        <option value="CMYK" label="CMYK"></option>
         <option value="HWB" label="HWB"></option>
+        <option value="CMYK" label="CMYK"></option>
       </select>
     </div>
   </div>
@@ -132,8 +151,8 @@ function changeColorType() {
   @apply flex w-full mb-2 select-none px-4 justify-between;
 
   .upload {
-    @apply flex w-28 justify-center border-2 rounded-xl;
-    border-color: #9b4ee4;
+    @apply flex w-24 justify-center border-2 rounded-xl;
+    border-color: #6e6e6e;
 
     label {
       @apply cursor-pointer;
@@ -147,6 +166,10 @@ function changeColorType() {
   .select {
     @apply flex items-center;
 
+    .circle-block {
+      @apply rounded-full w-8 h-8 mx-2;
+    }
+
     .input {
       @apply border border-white;
 
@@ -154,6 +177,17 @@ function changeColorType() {
         @apply border-none outline-none text-white bg-black;
         text-indent: 4px;
         width: 210px;
+        height: 30px;
+      }
+    }
+
+    .copy {
+      @apply flex justify-center items-center cursor-pointer;
+      height: 30px;
+      width: 30px;
+
+      img {
+        width: 30px;
         height: 30px;
       }
     }
@@ -221,13 +255,13 @@ function changeColorType() {
 }
 
 *::-webkit-scrollbar-track {
-  background-color: #5f5f5f;
+  background-color: #292929;
   -webkit-border-radius: 2em;
   -moz-border-radius: 2em;
   border-radius: 2em;
 }
 *::-webkit-scrollbar-thumb {
-  background-color: #292929;
+  background-color: #5f5f5f;
   -webkit-border-radius: 2em;
   -moz-border-radius: 2em;
   border-radius: 2em;
