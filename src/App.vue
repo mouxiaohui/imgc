@@ -19,39 +19,41 @@ const colorType = ref<string>("HEX");
 const colorHex = ref<string>("");
 const colorValue = ref<string>("");
 const showCopy = ref<boolean>(true);
+const loading = ref(false);
 
 // 处理上传图片
-function handleUpload(event: any) {
+async function handleUpload(event: any) {
   const files = event.target.files;
 
   for (let i = 0; i < files.length; i++) {
+    loading.value = true;
     let reader = new FileReader();
     reader.readAsDataURL(files[i]);
-    reader.onload = function (e) {
+    reader.onload = async function (e) {
       let imageBase64 = e.target?.result?.toString();
       if (imageBase64) {
-        addPalette(imageBase64);
+        await addPalette(imageBase64);
+        loading.value = false;
       }
     };
   }
 }
 
 // 调用Rust函数，处理图片并分析颜色
-function addPalette(imageBase64: string) {
-  invoke("get_palettes", {
-    // 去除base64图片前缀: data:image/jpg;base64,
-    imageBase64: imageBase64.substring(imageBase64.indexOf(",") + 1)
-  })
-    .then((palettes: any) => {
-      palettes as Palette[];
-      refPalette.value.push({
-        imgSrc: imageBase64,
-        palettes
-      });
-    })
-    .catch((error: any) => {
-      console.log(error);
+async function addPalette(imageBase64: string) {
+  try {
+    let palettes = (await invoke("get_palettes", {
+      // 去除base64图片前缀: data:image/jpg;base64,
+      imageBase64: imageBase64.substring(imageBase64.indexOf(",") + 1)
+    })) as Palette[];
+
+    refPalette.value.push({
+      imgSrc: imageBase64,
+      palettes
     });
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 function handleSelectColor(color: Palette) {
@@ -123,7 +125,12 @@ function handleCopy() {
       </select>
     </div>
   </div>
-  <div class="body">
+  <div
+    class="body"
+    v-loading.fullscreen.lock="loading"
+    element-loading-text="解析中..."
+    element-loading-background="rgba(0, 0, 0, 0.8)"
+  >
     <ul>
       <li v-for="(item, index) in refPalette" :key="index">
         <div class="palette">
