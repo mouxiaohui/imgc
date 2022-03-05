@@ -5,7 +5,7 @@
 
 mod color;
 
-use color::IColor;
+use color::Palette;
 
 use image::imageops::FilterType;
 use kmeans_colors::get_kmeans_hamerly;
@@ -14,28 +14,40 @@ use palette::{Lab, Pixel, Srgb, Srgba};
 #[allow(dead_code)]
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![get_palette])
+        .invoke_handler(tauri::generate_handler![get_palettes])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
 
 #[tauri::command]
-fn get_palette(path: String) -> Result<Vec<IColor>, String> {
-    match image::open(path) {
-        Ok(img) => {
-            let img_bytes = img
-                .resize(400, 400, FilterType::Nearest)
-                .into_rgba8()
-                .into_raw();
+fn get_palettes(image_base64: String) -> Result<Vec<Palette>, String> {
+    match base64::decode(&image_base64) {
+        Ok(bytes) => {
+            let palettes;
+            if let Ok(resized) = resize_image(&bytes, 300, 300) {
+                palettes = get_icolors_from(&resized);
+            } else {
+                palettes = get_icolors_from(&bytes);
+            };
 
-            Ok(get_colors_from(img_bytes))
+            Ok(palettes)
         }
         Err(err) => Err(err.to_string()),
     }
 }
 
-fn get_colors_from(img_bytes: Vec<u8>) -> Vec<IColor>{
-    let lab: Vec<Lab> = Srgba::from_raw_slice(&img_bytes)
+fn resize_image(bytes: &Vec<u8>, nwidth: u32, nheight: u32) -> Result<Vec<u8>, String> {
+    match image::load_from_memory(&bytes) {
+        Ok(d_image) => {
+            let resized_image = d_image.resize(nwidth, nheight, FilterType::Nearest);
+            Ok(resized_image.into_rgb8().into_raw())
+        }
+        Err(err) => Err(err.to_string()),
+    }
+}
+
+fn get_icolors_from(img_bytes: &Vec<u8>) -> Vec<Palette> {
+    let lab: Vec<Lab> = Srgba::from_raw_slice(img_bytes)
         .iter()
         .map(|x| x.into_format().into())
         .collect();
@@ -53,12 +65,12 @@ fn get_colors_from(img_bytes: Vec<u8>) -> Vec<IColor>{
         .map(|x| Srgb::from(*x).into_format())
         .collect::<Vec<Srgb<u8>>>();
 
-    let mut icolors = Vec::new();
+    let mut palettes = Vec::new();
     for c in rgb {
-        let mut icolor = IColor::new((c.red, c.green, c.blue));
-        icolor.generate_hex();
-        icolors.push(icolor);
+        let mut ple = Palette::new((c.red, c.green, c.blue));
+        ple.generate_hex();
+        palettes.push(ple);
     }
 
-    icolors
+    palettes
 }

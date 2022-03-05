@@ -1,61 +1,63 @@
 <script setup lang="ts">
 import { ref } from "@vue/reactivity";
-import { readBinaryFile, readTextFile } from "@tauri-apps/api/fs";
 import { invoke } from "@tauri-apps/api/tauri";
-import { open } from "@tauri-apps/api/dialog";
+
+interface RefPalette {
+  imgSrc: string;
+  palettes: Array<Palette>;
+}
 
 interface Palette {
   rgb: string;
   hex: string;
 }
 
-let palettes = ref<Palette[]>([]);
+let refPalette = ref<RefPalette[]>([]);
 
 // 处理上传图片
-async function handleUpload() {
-  let filesPath = await open({
-    title: "选择图片",
-    multiple: true,
-    filters: [
-      {
-        name: "image",
-        extensions: ["svg", "png", "jpg", "jpeg"]
-      }
-    ]
-  });
+async function handleUpload(event: any) {
+  const files = event.target.files;
 
-  if (filesPath instanceof Array) {
-    for (const key in filesPath) {
-      await addPalette(filesPath[key]);
-    }
+  for (let i = 0; i < files.length; i++) {
+    let reader = new FileReader();
+    reader.readAsDataURL(files[i]);
+    reader.onload = function (e) {
+      let imageBase64 = e.target?.result?.toString();
+      if (imageBase64) {
+        addPalette(imageBase64);
+      }
+    };
   }
 }
 
-async function addPalette(path: string) {
-  let palette = await invoke("get_palette", { path: path });
-  console.log(palette);
-  // let rgb = palette.
-  // palettes.value.push({
-  //   colors
-  // })
+async function addPalette(imageBase64: string) {
+  let palettes = (await invoke("get_palettes", {
+    imageBase64: imageBase64.substring(imageBase64.indexOf(",") + 1)
+  })) as Palette[];
+  refPalette.value.push({
+    imgSrc: imageBase64,
+    palettes
+  });
+  console.log(palettes);
 }
 </script>
 
 <template>
   <div class="header">
-    <div class="upload" @click="handleUpload">
+    <div class="upload">
       <label class="cursor-pointer">
         <img src="./assets/image/upload.svg" />
         <div>上传图片</div>
+        <input class="hidden w-0 h-0" multiple="true" type="file" accept="image/*" @change="handleUpload" />
       </label>
     </div>
   </div>
   <div class="body">
     <ul>
-      <li v-for="(item, index) in palettes" :key="index">
+      <li v-for="(item, index) in refPalette" :key="index">
         <div class="palette">
-          <!-- <img :src="item.imgSrc" /> -->
-          <div class="colors"></div>
+          <div class="img"><img :src="item.imgSrc" /></div>
+          <div class="colors">{{ item.palettes }}</div>
         </div>
       </li>
     </ul>
@@ -86,10 +88,6 @@ async function addPalette(path: string) {
 
   .palette {
     @apply h-40 mt-4 flex;
-
-    img {
-      @apply h-40;
-    }
   }
 }
 

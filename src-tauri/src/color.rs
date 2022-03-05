@@ -1,12 +1,12 @@
 use serde::Serialize;
 
 #[derive(Serialize)]
-pub struct IColor {
+pub struct Palette {
     pub rgb: (u8, u8, u8),
     pub hex: String,
 }
 
-impl IColor {
+impl Palette {
     pub fn new(rgb: (u8, u8, u8)) -> Self {
         Self {
             rgb,
