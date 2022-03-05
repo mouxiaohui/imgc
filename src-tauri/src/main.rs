@@ -24,7 +24,7 @@ fn get_palettes(image_base64: String) -> Result<Vec<Palette>, String> {
     match base64::decode(&image_base64) {
         Ok(bytes) => {
             let palettes;
-            if let Ok(resized) = resize_image(&bytes, 300, 300) {
+            if let Ok(resized) = resize_image(&bytes, 200, 200) {
                 palettes = get_icolors_from(&resized);
             } else {
                 palettes = get_icolors_from(&bytes);
@@ -40,7 +40,7 @@ fn resize_image(bytes: &Vec<u8>, nwidth: u32, nheight: u32) -> Result<Vec<u8>, S
     match image::load_from_memory(&bytes) {
         Ok(d_image) => {
             let resized_image = d_image.resize(nwidth, nheight, FilterType::Nearest);
-            Ok(resized_image.into_rgb8().into_raw())
+            Ok(resized_image.into_rgba8().into_raw())
         }
         Err(err) => Err(err.to_string()),
     }
@@ -52,12 +52,7 @@ fn get_icolors_from(img_bytes: &Vec<u8>) -> Vec<Palette> {
         .map(|x| x.into_format().into())
         .collect();
 
-    let max_iterations = 20;
-    let converge = 1.0;
-    let verbose = false;
-    let seed: u64 = 0;
-
-    let result = get_kmeans_hamerly(10, max_iterations, converge, verbose, &lab, seed);
+    let result = get_kmeans_hamerly(10, 20, 1.0, false, &lab, 0);
 
     let rgb = &result
         .centroids
