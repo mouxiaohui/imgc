@@ -62,8 +62,8 @@ async function addPalette(imageBase64: string) {
   }
 }
 
-function handleSelectColor(colors: Colors) {
-  colorHex.value = colors.hex;
+function handleSelectColor(hexColor: string) {
+  colorHex.value = hexColor;
   changeColorType();
   // 写入剪切板
   writeText(colorValue.value);
@@ -109,7 +109,14 @@ async function handlePicker(pickerColor: string[]) {
 function handleClear(pickerColor: string[]) {
   pickerColor.length = 0;
 }
-</script>
+
+function deleteItem(pickerColor: string[], index: number) {
+  console.log(index);
+  pickerColor.splice(index, 1);
+  console.log(pickerColor);
+}
+</script>  
+
 
 <template>
   <div class="header">
@@ -160,7 +167,7 @@ function handleClear(pickerColor: string[]) {
                 v-for="(colors, j) in item.extractedColors"
                 :key="j"
                 :style="`background-color: ${colors.hex};`"
-                @click="handleSelectColor(colors)"
+                @click="handleSelectColor(colors.hex)"
               ></div>
             </div>
             <div class="picker-color">
@@ -168,7 +175,16 @@ function handleClear(pickerColor: string[]) {
                 <img @click="handlePicker(item.pickerColor)" src="./assets/image/color-picker.svg" alt="" />
                 <img @click="handleClear(item.pickerColor)" src="./assets/image/clear.svg" alt="" />
               </div>
-              <div class="picker-items">{{ item.pickerColor }}</div>
+              <div class="picker-items">
+                <div
+                  title="1. 左键显示并复制颜色值颜色值&#10;2. 右键删除此色块"
+                  v-for="(hexColor, j) in item.pickerColor"
+                  :key="j"
+                  :style="`background-color: ${hexColor};`"
+                  @click="handleSelectColor(hexColor)"
+                  @contextmenu.prevent="deleteItem(item.pickerColor, j)"
+                ></div>
+              </div>
             </div>
           </div>
         </div>
@@ -299,6 +315,18 @@ function handleClear(pickerColor: string[]) {
         }
 
         .picker-items {
+          @apply flex flex-wrap;
+
+          div {
+            @apply cursor-pointer m-1;
+            border-radius: 2px 2px 2px 2px;
+            width: 30px;
+            height: 30px;
+          }
+
+          div:hover {
+            box-shadow: 0 0 8px rgb(255, 255, 255);
+          }
         }
       }
     }
