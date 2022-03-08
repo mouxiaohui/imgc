@@ -5,11 +5,14 @@ import Color from "color";
 import { writeText } from "@tauri-apps/api/clipboard";
 
 interface RefPalette {
+  // imageBase64
   imgSrc: string;
-  palettes: Array<Palette>;
+  extractedColors: Array<Colors>;
+  // Array<hexColor>
+  pickerColor: Array<string>;
 }
 
-interface Palette {
+interface Colors {
   rgb: string;
   hex: string;
 }
@@ -42,22 +45,23 @@ async function handleUpload(event: any) {
 // 调用Rust函数，处理图片并分析颜色
 async function addPalette(imageBase64: string) {
   try {
-    let palettes = (await invoke("get_palettes", {
+    let extractedColors = (await invoke("extraction_color", {
       // 去除base64图片前缀: data:image/jpg;base64,
       imageBase64: imageBase64.substring(imageBase64.indexOf(",") + 1)
-    })) as Palette[];
+    })) as Colors[];
 
     refPalette.value.push({
       imgSrc: imageBase64,
-      palettes
+      extractedColors,
+      pickerColor: []
     });
   } catch (error) {
     console.log(error);
   }
 }
 
-function handleSelectColor(color: Palette) {
-  colorHex.value = color.hex;
+function handleSelectColor(colors: Colors) {
+  colorHex.value = colors.hex;
   changeColorType();
   // 写入剪切板
   writeText(colorValue.value);
@@ -91,6 +95,17 @@ function handleCopy() {
       showCopy.value = true;
     }, 450);
   }
+}
+
+async function handlePicker(pickerColor: string[]) {
+  // @ts-ignore
+  const eyeDropper = new EyeDropper();
+  const result = await eyeDropper.open();
+  pickerColor.push(result.sRGBHex);
+}
+
+function handleClear(pickerColor: string[]) {
+  pickerColor.length = 0;
 }
 </script>
 
@@ -136,15 +151,22 @@ function handleCopy() {
         <div class="palette">
           <div class="img"><img :src="item.imgSrc" /></div>
           <div class="colors">
-            <div class="wraper">
+            <div class="extracted-color">
               <div
                 class="color-block"
                 title="单击显示并复制颜色值颜色值"
-                v-for="(color, j) in item.palettes"
+                v-for="(colors, j) in item.extractedColors"
                 :key="j"
-                :style="`background-color: ${color.hex};`"
-                @click="handleSelectColor(color)"
+                :style="`background-color: ${colors.hex};`"
+                @click="handleSelectColor(colors)"
               ></div>
+            </div>
+            <div class="picker-color">
+              <div class="left-icon">
+                <img @click="handlePicker(item.pickerColor)" src="./assets/image/color-picker.svg" alt="" />
+                <img @click="handleClear(item.pickerColor)" src="./assets/image/clear.svg" alt="" />
+              </div>
+              <div class="picker-items">{{ item.pickerColor }}</div>
             </div>
           </div>
         </div>
@@ -159,6 +181,7 @@ function handleCopy() {
 
   .upload {
     @apply flex w-24 justify-center border-2 rounded-xl;
+    flex-shrink: 0;
     border-color: #6e6e6e;
 
     label {
@@ -220,6 +243,7 @@ function handleCopy() {
 
     .img {
       @apply border-2 border-white select-none;
+      flex-shrink: 0;
 
       img {
         width: 160px;
@@ -228,10 +252,10 @@ function handleCopy() {
     }
 
     .colors {
-      height: 160px;
+      height: 164px;
       width: calc(100% - 160px);
 
-      .wraper {
+      .extracted-color {
         @apply flex justify-center;
 
         .color-block {
@@ -250,6 +274,29 @@ function handleCopy() {
 
         .color-block:first-child {
           border-radius: 6px 0 0 6px;
+        }
+      }
+
+      .picker-color {
+        @apply pl-4 pt-4 flex;
+        height: 124px;
+
+        .left-icon {
+          @apply flex flex-col justify-between py-4 border border-white;
+          flex-shrink: 0;
+          background-color: #202020;
+
+          img {
+            @apply cursor-pointer;
+            width: 30px;
+          }
+
+          img:hover {
+            background-color: #474747;
+          }
+        }
+
+        .picker-items {
         }
       }
     }

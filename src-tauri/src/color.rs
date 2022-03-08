@@ -1,12 +1,12 @@
 use serde::Serialize;
 
 #[derive(Serialize)]
-pub struct Palette {
+pub struct Colors {
     pub rgb: (u8, u8, u8),
     pub hex: String,
 }
 
-impl Palette {
+impl Colors {
     pub fn new(rgb: (u8, u8, u8)) -> Self {
         Self {
             rgb,
