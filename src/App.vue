@@ -36,7 +36,9 @@ async function handleUpload(event: any) {
       let imageBase64 = e.target?.result?.toString();
       if (imageBase64) {
         await addPalette(imageBase64);
-        loading.value = false;
+        if (i == files.length - 1) {
+          loading.value = false;
+        }
       }
     };
   }
