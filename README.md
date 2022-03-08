@@ -1,6 +1,10 @@
-# <center>imgc
+# <p align="center">imgc</p>
 
-<center>✨一个基于 Tauri + Vue 开发的图片主色彩提取软件 ( 跨平台 )</center>
+<p align="center">✨一个基于 Tauri + Vue 开发的图片主色彩提取软件 ( 跨平台 )</p>
+
+支持的格式:
+- jpg/jpeg
+- png
 
 ---
 
