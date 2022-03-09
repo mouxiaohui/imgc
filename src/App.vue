@@ -27,6 +27,7 @@ const extractSeveral = ref("10");
 
 // 处理上传图片
 async function handleUpload(event: any) {
+  // 加载动画
   const files = event.target.files;
 
   for (let i = 0; i < files.length; i++) {
@@ -39,6 +40,8 @@ async function handleUpload(event: any) {
         await addPalette(imageBase64);
         if (i == files.length - 1) {
           loading.value = false;
+          // 清空input中的值
+          event.target.value = "";
         }
       }
     };
@@ -48,8 +51,6 @@ async function handleUpload(event: any) {
 // 调用Rust函数，处理图片并分析颜色
 async function addPalette(imageBase64: string) {
   try {
-    console.log(extractSeveral.value);
-
     let extractedColors = (await invoke("extraction_color", {
       // 去除base64图片前缀: data:image/jpg;base64,
       imageBase64: imageBase64.substring(imageBase64.indexOf(",") + 1),
@@ -115,9 +116,7 @@ function handleClear(pickerColor: string[]) {
 }
 
 function deleteItem(pickerColor: string[], index: number) {
-  console.log(index);
   pickerColor.splice(index, 1);
-  console.log(pickerColor);
 }
 
 function handleDelete(index: number) {
