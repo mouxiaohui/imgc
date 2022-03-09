@@ -119,6 +119,10 @@ function deleteItem(pickerColor: string[], index: number) {
   pickerColor.splice(index, 1);
   console.log(pickerColor);
 }
+
+function handleDelete(index: number) {
+  refPalette.value.splice(index, 1);
+}
 </script>
 
 <template>
@@ -137,7 +141,7 @@ function deleteItem(pickerColor: string[], index: number) {
       </label>
     </div>
     <div class="extractSeveral">
-      <p>解析数: </p>
+      <p>解析数:</p>
       <select v-model="extractSeveral">
         <option value="5" label="5"></option>
         <option value="8" label="8"></option>
@@ -199,6 +203,9 @@ function deleteItem(pickerColor: string[], index: number) {
                 ></div>
               </div>
             </div>
+          </div>
+          <div class="delete">
+            <img src="./assets/image/delete.svg" @click="handleDelete(index)" />
           </div>
         </div>
       </li>
@@ -282,7 +289,7 @@ function deleteItem(pickerColor: string[], index: number) {
   height: calc(100% - 148px);
 
   .palette {
-    @apply mt-4 flex;
+    @apply mt-4 flex select-none;
     height: 164px;
 
     .img {
@@ -297,7 +304,7 @@ function deleteItem(pickerColor: string[], index: number) {
 
     .colors {
       height: 164px;
-      width: calc(100% - 160px);
+      width: calc(100% - 186px);
 
       .extracted-color {
         @apply flex justify-center;
@@ -354,6 +361,22 @@ function deleteItem(pickerColor: string[], index: number) {
             box-shadow: 0 0 8px rgb(255, 255, 255);
           }
         }
+      }
+    }
+
+    .delete {
+      @apply cursor-pointer flex justify-center items-center;
+      width: 26px;
+      height: 26px;
+
+      img {
+        width: 20px;
+        height: 20px;
+      }
+
+      img:hover {
+        width: 26px;
+        height: 26px;
       }
     }
   }
