@@ -23,6 +23,7 @@ const colorHex = ref<string>("");
 const colorValue = ref<string>("");
 const showCopy = ref<boolean>(true);
 const loading = ref(false);
+const extractSeveral = ref("10");
 
 // 处理上传图片
 async function handleUpload(event: any) {
@@ -47,9 +48,12 @@ async function handleUpload(event: any) {
 // 调用Rust函数，处理图片并分析颜色
 async function addPalette(imageBase64: string) {
   try {
+    console.log(extractSeveral.value);
+
     let extractedColors = (await invoke("extraction_color", {
       // 去除base64图片前缀: data:image/jpg;base64,
-      imageBase64: imageBase64.substring(imageBase64.indexOf(",") + 1)
+      imageBase64: imageBase64.substring(imageBase64.indexOf(",") + 1),
+      extractSeveral: Number(extractSeveral.value)
     })) as Colors[];
 
     refPalette.value.push({
@@ -115,8 +119,7 @@ function deleteItem(pickerColor: string[], index: number) {
   pickerColor.splice(index, 1);
   console.log(pickerColor);
 }
-</script>  
-
+</script>
 
 <template>
   <div class="header">
@@ -132,6 +135,16 @@ function deleteItem(pickerColor: string[], index: number) {
           @change="handleUpload"
         />
       </label>
+    </div>
+    <div class="extractSeveral">
+      <p>解析数: </p>
+      <select v-model="extractSeveral">
+        <option value="5" label="5"></option>
+        <option value="8" label="8"></option>
+        <option value="10" label="10"></option>
+        <option value="15" label="15"></option>
+        <option value="20" label="20"></option>
+      </select>
     </div>
     <div class="select">
       <div class="circle-block" :style="`background-color: ${colorHex};`"></div>
@@ -208,6 +221,19 @@ function deleteItem(pickerColor: string[], index: number) {
       img {
         @apply w-16 h-14;
       }
+    }
+  }
+
+  .extractSeveral {
+    @apply flex items-center;
+
+    select {
+      @apply outline-none border border-white ml-4;
+      font-size: 18px;
+      text-indent: 4px;
+      width: 80px;
+      height: 30px;
+      background: black;
     }
   }
 

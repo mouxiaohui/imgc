@@ -20,14 +20,14 @@ fn main() {
 }
 
 #[tauri::command]
-fn extraction_color(image_base64: String) -> Result<Vec<Colors>, String> {
+fn extraction_color(image_base64: String, extract_several: usize) -> Result<Vec<Colors>, String> {
     match base64::decode(&image_base64) {
         Ok(bytes) => {
             let colors;
             if let Ok(resized) = resize_image(&bytes, 200, 200) {
-                colors = get_icolors_from(&resized);
+                colors = get_icolors_from(&resized, extract_several);
             } else {
-                colors = get_icolors_from(&bytes);
+                colors = get_icolors_from(&bytes, extract_several);
             };
 
             Ok(colors)
@@ -46,13 +46,13 @@ fn resize_image(bytes: &Vec<u8>, nwidth: u32, nheight: u32) -> Result<Vec<u8>, S
     }
 }
 
-fn get_icolors_from(img_bytes: &Vec<u8>) -> Vec<Colors> {
+fn get_icolors_from(img_bytes: &Vec<u8>, extract_several: usize) -> Vec<Colors> {
     let lab: Vec<Lab> = Srgba::from_raw_slice(img_bytes)
         .iter()
         .map(|x| x.into_format().into())
         .collect();
 
-    let result = get_kmeans_hamerly(10, 20, 1.0, false, &lab, 0);
+    let result = get_kmeans_hamerly(extract_several, 20, 1.0, false, &lab, 0);
 
     let rgb = &result
         .centroids

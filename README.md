@@ -1,4 +1,4 @@
-# <p align="center">imgc</p>
+# <p align="center">imgc 🖼️🎨</p>
 
 <p align="center">✨一个基于 Tauri + Vue 开发的图片主色彩提取软件 ( 跨平台 )</p>
 
