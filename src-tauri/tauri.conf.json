@@ -59,7 +59,8 @@
         "width": 1000,
         "height": 660,
         "resizable": true,
-        "fullscreen": false
+        "fullscreen": false,
+        "center": true
       }
     ],
     "security": {
