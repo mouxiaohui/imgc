@@ -26,23 +26,25 @@ const loading = ref(false);
 const extractSeveral = ref("10");
 
 // 处理上传图片
-async function handleUpload(event: any) {
-  // 加载动画
+function handleUpload(event: any) {
   const files = event.target.files;
 
+  // 加载动画
   for (let i = 0; i < files.length; i++) {
     loading.value = true;
     let reader = new FileReader();
     reader.readAsDataURL(files[i]);
-    reader.onload = async function (e) {
+    reader.onload = function (e) {
       let imageBase64 = e.target?.result?.toString();
       if (imageBase64) {
-        await addPalette(imageBase64);
-        if (i == files.length - 1) {
-          loading.value = false;
-          // 清空input中的值
-          event.target.value = "";
-        }
+        console.log(i, "  ", files.length);
+        addPalette(imageBase64).then(() => {
+          if (i == files.length - 1) {
+            loading.value = false;
+            // 清空input中的值
+            event.target.value = "";
+          }
+        });
       }
     };
   }
