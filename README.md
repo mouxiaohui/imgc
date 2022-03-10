@@ -5,6 +5,7 @@
 支持的格式:
 - jpg/jpeg
 - png
+- ico
 
 ---
 

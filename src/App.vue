@@ -134,7 +134,7 @@ function handleDelete(index: number) {
           class="hidden w-0 h-0"
           multiple="true"
           type="file"
-          accept="image/jpg, image/png, image/jpeg"
+          accept="image/jpg, image/jpeg, image/png, image/x-icon"
           @change="handleUpload"
         />
       </label>

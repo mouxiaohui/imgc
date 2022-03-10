@@ -22,7 +22,7 @@ tauri = { version = "1.0.0-rc.3", features = ["api-all"] }
 
 [dependencies.image]
 version = "0.24.1"
-features = ["jpeg", "png"]
+features = ["jpeg", "png", "ico"]
 default-features = false
 
 [dependencies.kmeans_colors]
